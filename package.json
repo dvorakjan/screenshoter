@@ -1,0 +1,21 @@
+{
+  "name": "screenshoter",
+  "version": "0.0.1",
+  "description": "Web service for page with given URL rasterization. Using phantomjs.",
+  "main": "server",
+  "dependencies": {
+    "path": "~0.4.9",
+    "mime": "~1.2.11",
+    "sha1": "~1.1.0"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dvorakjan/screenshoter.git"
+  },
+  "author": "Jan Dvorak",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dvorakjan/screenshoter/issues"
+  }
+}
