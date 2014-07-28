@@ -6,7 +6,8 @@
   "dependencies": {
     "path": "~0.4.9",
     "mime": "~1.2.11",
-    "sha1": "~1.1.0"
+    "sha1": "~1.1.0",
+    "commander": "~2.3.0"
   },
   "devDependencies": {},
   "repository": {

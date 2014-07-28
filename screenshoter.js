@@ -4,8 +4,13 @@ var path = require('path'),
     url  = require('url'),
     fs   = require('fs'),
     exec = require('child_process').exec,
-    sha1 = require('sha1');
+    sha1 = require('sha1'),
+    program = require('commander');
 
+program
+  .version('0.0.1')
+  .option('-p, --port <n>', 'Set listen port', parseInt)
+  .parse(process.argv);
 
 if (!fs.existsSync(__dirname+'/temp/')) {
   fs.mkdir(__dirname+'/temp/');
@@ -38,6 +43,7 @@ http.createServer(function(request, res){
             res.end('Nepovedlo se sejmou obraz pozadovane stranky.');
           }
         } else {
+          console.log(stdout, stderr);
           res.writeHead(500);
           res.end('Chyba behem snimani obrazu pozadovane stranky.');
         }
@@ -49,5 +55,5 @@ http.createServer(function(request, res){
 
 
   
-}).listen(9001);
-console.log('Page capture server running on port 9001');
+}).listen(program.port || 9001);
+console.log('Page capture server running on port '+(program.port   || 9001));
