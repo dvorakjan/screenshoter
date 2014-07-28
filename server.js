@@ -30,7 +30,7 @@ http.createServer(function(request, res){
             
 
             var filestream = fs.createReadStream(file).on('end', function() {
-              fs.unlinkSync(file);
+              //fs.unlinkSync(file);
             });
             filestream.pipe(res);
           } else {
