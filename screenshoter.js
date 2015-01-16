@@ -10,6 +10,7 @@ var path = require('path'),
 program
   .version('0.0.1')
   .option('-p, --port <n>', 'Set listen port', parseInt)
+  .option('-s, --ignore-ssl-errors', 'Ignore ssl errors')
   .parse(process.argv);
 
 if (!fs.existsSync(__dirname+'/temp/')) {
@@ -19,9 +20,10 @@ if (!fs.existsSync(__dirname+'/temp/')) {
 http.createServer(function(request, res){
   var urlParts = url.parse(request.url, true);
 
-  if (urlParts.query.url) {
+  if (urlParts.query.url) { 
     var fileName = sha1(urlParts.query.url)+'.png';
-    var phantom = exec('phantomjs rasterize.js '+urlParts.query.url+' temp/'+fileName, function (error, stdout, stderr) {
+    var phantomParams = (program.ignoreSslErrors) ? '--ignore-ssl-errors=yes' : '';
+    var phantom = exec('phantomjs '+phantomParams+' rasterize.js '+urlParts.query.url+' temp/'+fileName, function (error, stdout, stderr) {
         if (stdout.indexOf('Crop to') > -1) {
           var file = __dirname + '/temp/' + fileName;
           if (fs.existsSync(file)) {
@@ -57,3 +59,4 @@ http.createServer(function(request, res){
   
 }).listen(program.port || 9001);
 console.log('Page capture server running on port '+(program.port   || 9001));
+if (program.ignoreSslErrors) console.log('WARNING: SSL check disabled.');

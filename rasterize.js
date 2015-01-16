@@ -34,9 +34,17 @@ if (system.args.length < 3 || system.args.length > 5) {
     if (system.args.length > 4) {
         page.zoomFactor = system.args[4];
     }
+
+    page.onResourceError = function(resourceError) {
+        page.reason = resourceError.errorString;
+        page.reason_url = resourceError.url;
+    };
+
     page.open(address, function (status) {
     if (status !== 'success') {
         console.log('Unable to load the address!');
+        console.log(page.reason);
+        phantom.exit(1);
     } else {
         var height = page.evaluate(function(){
             return document.getElementsByTagName("body")[0].offsetHeight;
