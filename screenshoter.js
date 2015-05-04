@@ -22,7 +22,7 @@ http.createServer(function(request, res){
 
   if (urlParts.query.url) { 
     var fileName = sha1(urlParts.query.url)+'.png';
-    var phantomParams = (program.ignoreSslErrors) ? '--ignore-ssl-errors=yes' : '';
+    var phantomParams = (program.ignoreSslErrors) ? '--ssl-protocol=tlsv1 --ignore-ssl-errors=yes' : '';
     var phantom = exec('phantomjs '+phantomParams+' rasterize.js '+urlParts.query.url+' temp/'+fileName, function (error, stdout, stderr) {
         if (stdout.indexOf('Crop to') > -1) {
           var file = __dirname + '/temp/' + fileName;
