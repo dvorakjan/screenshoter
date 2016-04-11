@@ -24,7 +24,7 @@ http.createServer(function(request, res){
     var filetype = urlParts.query.type ? urlParts.query.type : 'png';
     var size     = urlParts.query.size ? ' '+urlParts.query.size : '';
     var fileName = sha1(urlParts.query.url)+'.'+filetype;
-    var phantomParams = (program.ignoreSslErrors) ? '--ssl-protocol=tlsv1 --ignore-ssl-errors=yes' : '';
+    var phantomParams = (program.ignoreSslErrors) ? '--ssl-protocol=tlsv1 --ignore-ssl-errors=yes' : '--ssl-protocol=tlsv1';
     var cmd = 'phantomjs '+phantomParams+' rasterize.js '+urlParts.query.url+' temp/'+fileName+size;
     var phantom = exec(cmd, function (error, stdout, stderr) {
         if (stdout.indexOf('Crop to') > -1) {
