@@ -1,7 +1,9 @@
 var path = require('path'),
     mime = require('mime'),
-    http = require('http'),
-    https = require('https'),
+    // http = require('http'),
+    http = require('follow-redirects').http,
+    // https = require('https'),
+    https = require('follow-redirects').https,
     url = require('url'),
     fs = require('fs'),
     sha1 = require('sha1'),
@@ -17,6 +19,84 @@ program
 if (!fs.existsSync(__dirname + '/temp/')) {
     fs.mkdir(__dirname + '/temp/');
 }
+
+
+var screenOldWay = function (request, res, urlParts, fileType, body) {
+    res.writeHead(500);
+    res.end('fail');
+};
+
+var screenNewWay = function (request, res, urlParts, fileType, body) {
+
+    var params = {};
+
+    try {
+        if (body != "") {
+            var json = JSON.parse(body);
+            if (typeof(json.transformParams) != 'undefined') {
+                params = json.transformParams;
+            }
+        }
+        params.type = fileType;
+    } catch(e) {
+        console.log(e);
+        res.writeHead(500);
+        res.end();
+        return;
+    }
+
+    var htmlUrl = urlParts.query.url;
+    var htmlUrlParts = url.parse(htmlUrl, true);
+
+    var responseHandler = function (res2) {
+
+        var html = '';
+        res2.on('data', function (chunk2) {
+            html += chunk2;
+        });
+        res2.on('end', function () {
+
+            console.log(params);
+
+            pdf.create(html, params).toStream(function(err, stream) {
+                if (err) {
+                    console.log(err);
+                    res.writeHead(500);
+                    res.end();
+                } else {
+
+                    if (fileType == 'jpeg') {
+                        var contentType = 'image/jpeg';
+                    } else if (fileType == 'pdf') {
+                        contentType = 'application/pdf';
+                    } else {
+                        contentType = 'image/png';
+                    }
+                    res.setHeader('Content-type', contentType);
+                    res.setHeader('Content-disposition', 'attachment; filename=' + htmlUrl.replace('http://','').replace('https://','').replace('.','-') + '.' + fileType);
+                    stream.pipe(res);
+                }
+            });
+        });
+    };
+
+    if (htmlUrlParts.protocol == 'https:') {
+        var pdfRequest = https.get(htmlUrl, responseHandler);
+    } else if (htmlUrlParts.protocol == 'http:') {
+        pdfRequest = http.get(htmlUrl, responseHandler);
+    } else {
+        pdfRequest = null;
+    }
+    if (pdfRequest) {
+        pdfRequest.on('error', function (e) {
+            console.log(e.message);
+            res.writeHead(500);
+            res.end();
+        });
+    }
+
+};
+
 
 var server = function (request, res) {
     var body = "";
@@ -40,73 +120,11 @@ var server = function (request, res) {
             fileType = 'png';
         }
 
-        var params = {};
-
-        try {
-            if (body != "") {
-                var json = JSON.parse(body);
-                if (typeof(json.transformParams) != 'undefined') {
-                    params = json.transformParams;
-                }
-            }
-            params.type = fileType;
-        } catch(e) {
-            console.log(e);
-            res.writeHead(500);
-            res.end();
-            return;
-        }
-
-        var htmlUrl = urlParts.query.url;
-        var htmlUrlParts = url.parse(htmlUrl, true);
-
-        var responseHandler = function (res2) {
-
-            var html = '';
-            res2.on('data', function (chunk2) {
-                html += chunk2;
-            });
-            res2.on('end', function () {
-
-                console.log(params);
-
-                pdf.create(html, params).toStream(function(err, stream) {
-                    if (err) {
-                        console.log(err);
-                        res.writeHead(500);
-                        res.end();
-                    } else {
-
-                        if (fileType == 'jpeg') {
-                            var contentType = 'image/jpeg';
-                        } else if (fileType == 'pdf') {
-                            contentType = 'application/pdf';
-                        } else {
-                            contentType = 'image/png';
-                        }
-                        res.setHeader('Content-type', contentType);
-                        res.setHeader('Content-disposition', 'attachment; filename=' + htmlUrl.replace('http://','').replace('https://','').replace('.','-') + '.' + fileType);
-                        stream.pipe(res);
-                    }
-                });
-            });
-        };
-
-        if (htmlUrlParts.protocol == 'https:') {
-            var pdfRequest = https.get(htmlUrl, responseHandler);
-        } else if (htmlUrlParts.protocol == 'http:') {
-            pdfRequest = http.get(htmlUrl, responseHandler);
+        if (typeof(urlParts.query.technology) != 'undefined' && urlParts.query.technology == 'new') {
+            screenNewWay(request, res, urlParts, fileType, body);
         } else {
-            pdfRequest = null;
+            screenOldWay(request, res, urlParts, fileType, body);
         }
-        if (pdfRequest) {
-            pdfRequest.on('error', function (e) {
-                console.log(e.message);
-                res.writeHead(500);
-                res.end();
-            });
-        }
-
     });
 };
 
