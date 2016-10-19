@@ -1,14 +1,13 @@
 var path = require('path'),
     mime = require('mime'),
-    // http = require('http'),
     http = require('follow-redirects').http,
-    // https = require('https'),
     https = require('follow-redirects').https,
     url = require('url'),
     fs = require('fs'),
+    exec = require('child_process').exec,
     sha1 = require('sha1'),
-    pdf = require('html-pdf'),
-    program = require('commander');
+    program = require('commander'),
+    pdf = require('html-pdf');
 
 program
     .version('0.1.0')
@@ -22,8 +21,38 @@ if (!fs.existsSync(__dirname + '/temp/')) {
 
 
 var screenOldWay = function (request, res, urlParts, fileType, body) {
-    res.writeHead(500);
-    res.end('fail');
+
+    var size     = urlParts.query.size ? ' '+urlParts.query.size : '';
+    var fileName = sha1(urlParts.query.url)+'.'+fileType;
+    var phantomParams = (program.ignoreSslErrors) ? '--ssl-protocol=tlsv1 --ignore-ssl-errors=yes' : '--ssl-protocol=tlsv1';
+    var cmd = 'phantomjs '+phantomParams+' rasterize.js '+urlParts.query.url+' temp/'+fileName+size;
+    var phantom = exec(cmd, function (error, stdout, stderr) {
+        if (stdout.indexOf('Crop to') > -1) {
+            var file = __dirname + '/temp/' + fileName;
+            if (fs.existsSync(file)) {
+
+                var filename = path.basename(file);
+                var mimetype = mime.lookup(file);
+
+                res.setHeader('Content-type', mimetype);
+                if (typeof urlParts.query.download !== 'undefined')
+                    res.setHeader('Content-disposition', 'attachment; filename=' + urlParts.query.url.replace('http://','').replace('.','-'));
+
+
+                var filestream = fs.createReadStream(file).on('end', function() {
+                    //fs.unlinkSync(file);
+                });
+                filestream.pipe(res);
+            } else {
+                res.writeHead(500);
+                res.end('Nepovedlo se sejmou obraz pozadovane stranky.');
+            }
+        } else {
+            console.log(stdout, stderr);
+            res.writeHead(500);
+            res.end('Chyba behem snimani obrazu pozadovane stranky.');
+        }
+    });
 };
 
 var screenNewWay = function (request, res, urlParts, fileType, body) {
