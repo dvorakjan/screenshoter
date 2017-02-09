@@ -4,10 +4,14 @@
   "description": "Web service for page with given URL rasterization. Using phantomjs.",
   "main": "server",
   "dependencies": {
-    "path": "~0.4.9",
+    "assert": "^1.4.1",
+    "commander": "~2.3.0",
+    "follow-redirects": "^0.2.0",
+    "html-pdf": "^2.1.0",
     "mime": "~1.2.11",
+    "path": "~0.4.9",
     "sha1": "~1.1.0",
-    "commander": "~2.3.0"
+    "webpage": "^0.3.0"
   },
   "devDependencies": {},
   "repository": {
